@@ -15,12 +15,11 @@ import {cpfValidator} from '@/utils/cpfValidator';
 
 export type TFormSchema = z.infer<typeof formSchema>;
 
-type PaymentFormProps = {
+type CreditCardFormProps = {
   slug: string,
-  setHasError: (has: boolean) => void,
 };
 
-export const PaymentForm: FunctionComponent<PaymentFormProps> = ({slug, setHasError}) => {
+export const CreditCardForm: FunctionComponent<CreditCardFormProps> = ({slug}) => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const {donatorInfo, setDonatorInfo} = useDonatorInfo();
@@ -39,7 +38,7 @@ export const PaymentForm: FunctionComponent<PaymentFormProps> = ({slug, setHasEr
         },
     });
 
-    async function onSubmit(values: TFormSchema): Promise<void> {
+    function onSubmit(values: TFormSchema): void {
         setLoading(true);
         const paymentMethodInfo = {
             creditCard: {
@@ -58,29 +57,31 @@ export const PaymentForm: FunctionComponent<PaymentFormProps> = ({slug, setHasEr
             }),
         );
 
-        try {
-            const response = await fetch('/api/payment-checkout', {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...donatorInfo,
-                    payment: {
-                        ...donatorInfo?.payment,
-                        amount: (donatorInfo?.payment?.amount ?? 0) * 100,
-                    },
-                    paymentMethodInfo: paymentMethodInfo,
-                }),
-            });
+        router.push(`/${slug}/confirmacao`);
 
-            if (!response.ok) {
-                throw new Error(response.statusText);
-            }
+        // try {
+        //     const response = await fetch('/api/payment-checkout', {
+        //         method: 'POST',
+        //         body: JSON.stringify({
+        //             ...donatorInfo,
+        //             payment: {
+        //                 ...donatorInfo?.payment,
+        //                 amount: (donatorInfo?.payment?.amount ?? 0) * 100,
+        //             },
+        //             paymentMethodInfo: paymentMethodInfo,
+        //         }),
+        //     });
 
-            setHasError(false);
+        //     if (!response.ok) {
+        //         throw new Error(response.statusText);
+        //     }
 
-            router.push(`/${slug}/sucesso`);
-        } catch (e) {
-            setHasError(true);
-        }
+        //     setHasError(false);
+
+        //     router.push(`/${slug}/sucesso`);
+        // } catch (e) {
+        //     setHasError(true);
+        // }
     }
 
     useEffect(() => () => setLoading(false), []);

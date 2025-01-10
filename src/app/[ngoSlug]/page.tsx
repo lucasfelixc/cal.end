@@ -1,10 +1,13 @@
-import {FunctionComponent} from 'react';
+import {ReactElement} from 'react';
 import {DonateValueStep} from './_components/DonateValueStep';
+import {getNgoData} from './_ngoData';
 
 type HomeProps = {params: {ngoSlug: string}};
 
-const Home: FunctionComponent<HomeProps> = ({params}: HomeProps) => (
-    <DonateValueStep params={params} />
-);
+export default async function Home({params}: HomeProps): Promise<ReactElement> {
+    const data = await getNgoData(params.ngoSlug);
 
-export default Home;
+    return (
+        <DonateValueStep ngoSlug={params.ngoSlug} products={data?.products ?? []} />
+    );
+}

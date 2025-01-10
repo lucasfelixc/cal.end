@@ -11,10 +11,13 @@ import {
     useContext,
 } from 'react';
 
+export type PaymentWay = 'card' | 'boleto';
+
 export type DonatorInfo = {
     user: {
         firstname: string,
         lastname: string,
+        cpf: string,
         phone: string,
         email: string,
         birthday: string,
@@ -26,13 +29,16 @@ export type DonatorInfo = {
         zipcode: string,
         complement: string,
         city: string,
+        state: string,
     },
+    paymentWay: PaymentWay,
     payment: {
         amount: number,
         recurring_payment_enabled: boolean,
         ngo_slug: string,
         payment_method_id: string,
         document: number,
+        include_taxes: boolean,
     },
     paymentMethodInfo: {
         creditCard: {

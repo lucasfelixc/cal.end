@@ -5,12 +5,13 @@ import * as z from 'zod';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {useForm} from 'react-hook-form';
 import {useRouter} from 'next/navigation';
-import {phoneMask} from '@/lib/utils';
+import {cpfMask, phoneMask} from '@/lib/utils';
 import {useDonatorInfo} from '@/hooks/useDonatorInfo';
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/Form';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/Select';
 import {Button} from '@/components/ui/Button';
 import {Input} from '@/components/ui/Input';
+import {cpfValidator} from '@/utils/cpfValidator';
 
 type TFormSchema = z.infer<typeof formSchema>;
 
@@ -20,7 +21,7 @@ export const PersonalDataForm: FunctionComponent<PersonalDataFormProps> = ({slug
     const router = useRouter();
     const {donatorInfo, setDonatorInfo} = useDonatorInfo();
     const [loading, setLoading] = useState(false);
-    const {firstname, lastname, phone, email, birthday} = donatorInfo?.user ?? {};
+    const {firstname, lastname, cpf, phone, email, birthday} = donatorInfo?.user ?? {};
     const birthdaySplited = birthday?.split('-') ?? [];
 
     const form = useForm<TFormSchema>({
@@ -28,6 +29,7 @@ export const PersonalDataForm: FunctionComponent<PersonalDataFormProps> = ({slug
         defaultValues: {
             firstname: firstname,
             lastname: lastname,
+            cpf: cpf,
             phone: phoneMask(phone ?? null) ?? '',
             email: email,
             birthday: birthdaySplited[2] ?? '',
@@ -45,6 +47,7 @@ export const PersonalDataForm: FunctionComponent<PersonalDataFormProps> = ({slug
                     ...prev?.user,
                     firstname: values.firstname,
                     lastname: values.lastname,
+                    cpf: values.cpf.replaceAll(/[^0-9]+/g, ''),
                     email: values.email,
                     birthday: `${values.birthyear}-${values.birthmonth}-${values.birthday}`,
                     phone: values.phone.replaceAll(/[^0-9]+/g, ''),
@@ -86,6 +89,26 @@ export const PersonalDataForm: FunctionComponent<PersonalDataFormProps> = ({slug
                             </FormLabel>
                             <FormControl>
                                 <Input aria-label="Sobrenome" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="cpf"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel className="block text-sm font-medium leading-6 text-gray-700">CPF</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    aria-label="Documento CPF"
+                                    inputMode="numeric"
+                                    placeholder="000.000.000-00"
+                                    maxLength={14}
+                                    onChange={value => field.onChange(cpfMask(value.target.value))}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -225,6 +248,16 @@ const formSchema = z.object({
         .string({required_error: 'O campo sobrenome é obrigatório.'})
         .trim()
         .min(3, {message: 'O tamanho mínimo do sobrenome é de 3 caracteres.'}),
+    cpf: z
+        .string({required_error: 'O campo CPF é obrigatório.'})
+        .refine(
+            value => /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(value),
+            'Por favor, informe um CPF no formato válido.',
+        )
+        .refine(
+            value => cpfValidator(value),
+            'Por favor, informe um CPF válido.',
+        ),
     phone: z
         .string({required_error: 'O campo telefone é obrigatório.'})
         .trim()

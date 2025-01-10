@@ -22,7 +22,7 @@ export const AddressDataForm: FunctionComponent<AddressDataFormProps> = ({slug})
     const [searchingAddress, setSearchingAddress] = useState(false);
     const [loading, setLoading] = useState(false);
     const {donatorInfo, setDonatorInfo} = useDonatorInfo();
-    const {street, number, complement, neighborhood, city, zipcode} = donatorInfo?.address ?? {};
+    const {street, number, complement, neighborhood, city, state, zipcode} = donatorInfo?.address ?? {};
     const form = useForm<TFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -31,6 +31,7 @@ export const AddressDataForm: FunctionComponent<AddressDataFormProps> = ({slug})
             complement: complement,
             neighborhood: neighborhood,
             city: city,
+            state: state,
             zipcode: cepMask(zipcode ?? null) ?? '',
         },
     });
@@ -47,7 +48,7 @@ export const AddressDataForm: FunctionComponent<AddressDataFormProps> = ({slug})
             }),
         );
 
-        router.push(`/${slug}/pagamento`);
+        router.push(`/${slug}/forma-de-pagamento`);
     }
 
     const onSearchAddressData = async (
@@ -88,6 +89,8 @@ export const AddressDataForm: FunctionComponent<AddressDataFormProps> = ({slug})
         form.setValue('neighborhood', addressData.bairro);
 
         form.setValue('city', addressData.localidade);
+
+        form.setValue('state', addressData.uf);
     };
 
     useEffect(() => () => setLoading(false), []);
@@ -190,19 +193,38 @@ export const AddressDataForm: FunctionComponent<AddressDataFormProps> = ({slug})
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="city"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel className="block text-sm font-medium leading-6 text-gray-700">Cidade</FormLabel>
-                            <FormControl>
-                                <Input {...field} aria-label="Cidade" disabled={searchingAddress} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-2 gap-5">
+                    <FormField
+                        control={form.control}
+                        name="city"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel className="block text-sm font-medium leading-6 text-gray-700">
+                                    Cidade
+                                </FormLabel>
+                                <FormControl>
+                                    <Input {...field} aria-label="Cidade" disabled={searchingAddress} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="state"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel className="block text-sm font-medium leading-6 text-gray-700">
+                                    Estado
+                                </FormLabel>
+                                <FormControl>
+                                    <Input {...field} aria-label="Estado" disabled={searchingAddress} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <Button className="mb-5" type="submit" variant="brand" aria-label="Continuar" loading={loading}>
                     Continuar
                 </Button>
@@ -233,6 +255,10 @@ const formSchema = z.object({
         .min(1, {message: 'Este campo não pode ser vazio.'}),
     city: z
         .string({required_error: 'O campo cidade é obrigatório.'})
+        .trim()
+        .min(1, {message: 'Este campo não pode ser vazio.'}),
+    state: z
+        .string({required_error: 'O campo estado é obrigatório.'})
         .trim()
         .min(1, {message: 'Este campo não pode ser vazio.'}),
 });

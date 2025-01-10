@@ -2,7 +2,7 @@
 
 'use client';
 
-import {FunctionComponent, useEffect, useState} from 'react';
+import {Fragment, FunctionComponent, useEffect, useState} from 'react';
 import * as z from 'zod';
 import {useForm} from 'react-hook-form';
 import {useRouter} from 'next/navigation';
@@ -13,6 +13,9 @@ import {RadioGroup} from '@/components/ui/RadioGroup';
 import {CurrencyInput} from '@/components/ui/CurrencyInput';
 import {Button} from '@/components/ui/Button';
 import {Switch} from '@/components/ui/Switch';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/Tabs';
+import {NgoData} from '@/app/[ngoSlug]/_ngoData';
+import {getValueWithTax} from '@/utils/convertValues';
 import {RadioCardItem} from './RadioCardItem';
 
 const formSchema = z.object({
@@ -25,23 +28,27 @@ const formSchema = z.object({
     subscription: z.boolean()
         .default(false)
         .optional(),
+    include_taxes: z.boolean({
+        required_error: 'Este campo não pode ser vazio.',
+    })
+        .default(true),
 });
 
 type TFormSchema = z.infer<typeof formSchema>;
 
 type DonateValueFormProps = {
   slug: string,
-  isSubscription: boolean,
-  setIsSubscription: (value: boolean) => void,
+  products: NgoData['products'],
 };
 
 export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: DonateValueFormProps) => {
-    const {slug, isSubscription, setIsSubscription} = props;
+    const {slug, products} = props;
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-
+    const [isSubscription, setIsSubscription] = useState(true);
+    const [includeTaxes, setIncludeTaxes] = useState<boolean>(true);
     const {donatorInfo, setDonatorInfo} = useDonatorInfo();
-    const {amount, recurring_payment_enabled} = donatorInfo?.payment ?? {};
+    const {amount, recurring_payment_enabled, include_taxes} = donatorInfo?.payment ?? {};
     const form = useForm<TFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -49,7 +56,8 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
             subscription:
         (recurring_payment_enabled ?? null) !== null
             ? (recurring_payment_enabled ?? false) === false
-            : false,
+            : true,
+            include_taxes: include_taxes ?? true,
         },
     });
 
@@ -74,102 +82,137 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
     useEffect(() => () => setLoading(false), []);
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <FormField
-                    control={form.control}
-                    name="donateValue"
-                    render={({field}) => (
-                        <FormItem className="flex flex-col mb-4">
-                            <RadioGroup
-                                aria-label={`Valores sugeridos de ${isSubscription ? 'assinatura' : 'doação'}`}
-                                className="flex gap-5 justify-center pb-10"
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                            >
-                                <FormItem>
-                                    <RadioCardItem
-                                        isSubscription={isSubscription}
-                                        isSelected={field.value === '10'}
-                                        field={{id: '10', value: '10'}}
-                                    />
-                                </FormItem>
-                                <FormItem>
-                                    <RadioCardItem
-                                        isSubscription={isSubscription}
-                                        isSelected={field.value === '30'}
-                                        field={{id: '30', value: '30'}}
-                                    />
-                                </FormItem>
-                                <FormItem>
-                                    <RadioCardItem
-                                        isSubscription={isSubscription}
-                                        isSelected={field.value === '50'}
-                                        field={{id: '50', value: '50'}}
-                                    />
-                                </FormItem>
-                            </RadioGroup>
+        <Fragment>
+            <h2 className="mb-3 text-center font-semibold text-lg text-gray-800 leading-7">
+                Faça sua {isSubscription ? 'assinatura' : 'doação'}
+            </h2>
+            <p className="mb-8 text-center text-sm text-gray-500 leading-6">
+                Faça a {isSubscription ? 'assinatura' : 'doação'} do bem e ajude quem mais precisa!
+            </p>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormField
+                        control={form.control}
+                        name="subscription"
+                        render={({field}) => (
                             <FormItem>
-                                <FormLabel htmlFor="donate-value" className="font-normal text-gray-700">
-                                    Caso prefira, digite o valor desejado para a
-                                    {isSubscription ? ' assinatura' : ' doação'}:
-                                </FormLabel>
-                                <CurrencyInput
-                                    id="donate-value"
-                                    aria-label={`Valor da ${isSubscription ? 'assinatura' : 'doação'}`}
-                                    placeholder="R$ 150,00"
-                                    decimalsLimit={2}
-                                    name={field.name}
-                                    disabled={field.disabled}
-                                    ref={field.ref}
-                                    defaultValue={field.value}
-                                    value={field.value}
-                                    onValueChange={value => field.onChange(value)}
-                                    onBlur={field.onBlur}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="subscription"
-                    render={({field}) => (
-                        <FormItem>
-                            <div className="py-5 ">
-                                <FormLabel htmlFor="switch" className="flex gap-6">
-                                    <FormControl>
-                                        <Switch
-                                            id="switch"
-                                            checked={field.value}
-                                            aria-label="Desejo doar apenas uma vez, não assinar."
-                                            onCheckedChange={
-                                                checked => {
-                                                    field.onChange(checked);
-                                                    setIsSubscription(checked === false);
-                                                }
+                                <FormControl>
+                                    <Tabs
+                                        defaultValue="subscription"
+                                        className="w-full mb-6"
+                                        value={field.value === true ? 'subscription' : 'one-time-donation'}
+                                        onValueChange={
+                                            value => {
+                                                field.onChange(value === 'subscription');
+                                                setIsSubscription(value === 'subscription');
                                             }
-                                        />
-                                    </FormControl>
-                                    <p className="text-sm text-gray-700">
-                                        Desejo doar apenas uma vez, não assinar.
-                                    </p>
+                                        }
+                                    >
+                                        <TabsList className="w-full">
+                                            <TabsTrigger value="subscription" className="flex-1">
+                                                Assinatura mensal
+                                            </TabsTrigger>
+                                            <TabsTrigger value="one-time-donation" className="flex-1">
+                                                Doação única
+                                            </TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="donateValue"
+                        render={({field}) => (
+                            <FormItem className="flex flex-col mb-4">
+                                <RadioGroup
+                                    aria-label={`Valores sugeridos de ${isSubscription ? 'assinatura' : 'doação'}`}
+                                    className="grid grid-cols-3 pb-8"
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                >
+                                    {products.map(
+                                        product => (
+                                            <FormItem key={product.name} className="w-full">
+                                                <RadioCardItem
+                                                    isSubscription={isSubscription}
+                                                    isSelected={
+                                                        field.value
+                                                        === (includeTaxes === true
+                                                            ? getValueWithTax(product.price / 100, 4)
+                                                            : product.price / 100).toString()
+                                                    }
+                                                    field={{
+                                                        id: (product.price).toString(),
+                                                        value: includeTaxes === true
+                                                            ? getValueWithTax(product.price / 100, 4)
+                                                            : product.price / 100,
+                                                    }}
+                                                />
+                                            </FormItem>
+                                        ),
+                                    )}
+                                </RadioGroup>
+                                <FormItem>
+                                    <FormLabel htmlFor="donate-value" className="font-normal text-gray-700">
+                                        Caso prefira, digite o valor desejado para a
+                                        {isSubscription ? ' assinatura' : ' doação'}:
+                                    </FormLabel>
+                                    <CurrencyInput
+                                        id="donate-value"
+                                        aria-label={`Valor da ${isSubscription ? 'assinatura' : 'doação'}`}
+                                        placeholder="R$ 150,00"
+                                        decimalsLimit={2}
+                                        name={field.name}
+                                        disabled={field.disabled}
+                                        ref={field.ref}
+                                        defaultValue={field.value}
+                                        value={field.value}
+                                        onValueChange={value => field.onChange(value)}
+                                        onBlur={field.onBlur}
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="include_taxes"
+                        render={({field}) => (
+                            <FormItem className="flex items-center gap-4 my-5">
+                                <FormControl>
+                                    <Switch
+                                        id="include_taxes"
+                                        checked={field.value === true}
+                                        aria-label="Cobrir taxas administrativas da doação."
+                                        onCheckedChange={
+                                            checked => {
+                                                field.onChange(checked);
+                                                form.resetField('donateValue');
+                                                setIncludeTaxes(checked);
+                                            }
+                                        }
+                                    />
+                                </FormControl>
+                                <FormLabel htmlFor="include_taxes" className="text-sm text-gray-700 !m-0">
+                                    Cobrir taxas administrativas da doação.
                                 </FormLabel>
-                            </div>
-                        </FormItem>
-                    )}
-                />
-                <Button
-                    aria-label="Continuar"
-                    className="mb-5 w-full"
-                    type="submit"
-                    variant="brand"
-                    loading={loading}
-                >
-                    Continuar
-                </Button>
-            </form>
-        </Form>
+                            </FormItem>
+                        )}
+                    />
+                    <Button
+                        aria-label="Continuar"
+                        className="mb-5 w-full"
+                        type="submit"
+                        variant="brand"
+                        loading={loading}
+                    >
+                        Continuar
+                    </Button>
+                </form>
+            </Form>
+        </Fragment>
     );
 };

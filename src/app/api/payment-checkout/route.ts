@@ -11,31 +11,48 @@ export async function POST(request: Request): Promise<Response> {
         address,
         payment,
         paymentMethodInfo,
+        paymentWay,
     } = await request.json() as DeepPartial<DonatorInfo>;
 
-    const paymentParams: Stripe.PaymentMethodCreateParams = {
-        type: 'card',
-        card: {
-            number: paymentMethodInfo?.creditCard?.cardNumber ?? '',
-            cvc: paymentMethodInfo?.creditCard?.cvc,
-            exp_month: parseInt(paymentMethodInfo?.creditCard?.exp_month ?? '', 10),
-            exp_year: parseInt(paymentMethodInfo?.creditCard?.exp_year ?? '', 10),
-        },
-    };
+    if (user === undefined || address === undefined || payment === undefined) {
+        throw new Error('Missing required information.');
+    }
 
-    const paymentMethod = await stripe.paymentMethods.create(paymentParams);
+    let paymentMethod: Stripe.Response<Stripe.PaymentMethod> | undefined;
 
-    if (!('id' in paymentMethod)) {
+    if (paymentWay === 'card') {
+        const paymentParams: Stripe.PaymentMethodCreateParams = {
+            type: 'card',
+            card: {
+                number: paymentMethodInfo?.creditCard?.cardNumber ?? '',
+                cvc: paymentMethodInfo?.creditCard?.cvc,
+                exp_month: parseInt(paymentMethodInfo?.creditCard?.exp_month ?? '', 10),
+                exp_year: parseInt(paymentMethodInfo?.creditCard?.exp_year ?? '', 10),
+            },
+        };
+
+        paymentMethod = await stripe.paymentMethods.create(paymentParams);
+    }
+
+    if (paymentMethod !== undefined && !('id' in paymentMethod)) {
         throw new Error('Failed to create the payment method.');
     }
 
+    const {cpf: userCpf, ...userData} = user;
+
     const payload = {
-        user: user,
+        user: userData,
         address: address,
         payment: {
             ...payment,
-            payment_method_id: paymentMethod.id,
-            document: paymentMethodInfo?.creditCard?.cpf,
+            payment_type: paymentWay,
+            ...(paymentWay === 'card' && paymentMethod !== undefined && {
+                payment_method_id: paymentMethod.id,
+                document: paymentMethodInfo?.creditCard?.cpf,
+            }),
+            ...(paymentWay === 'boleto' && {
+                document: userCpf,
+            }),
         },
     };
 

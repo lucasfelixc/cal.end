@@ -43,8 +43,12 @@ const getRouterBack = (paths: string[]): string => {
             return `/${paths[0]}`;
         case 'endereco':
             return `/${paths[0]}/dados-pessoais`;
-        case 'pagamento':
+        case 'forma-de-pagamento':
             return `/${paths[0]}/endereco`;
+        case 'pagamento':
+            return `/${paths[0]}/forma-de-pagamento`;
+        case 'confirmacao':
+            return `/${paths[0]}/forma-de-pagamento`;
         default:
             return `/${paths[0]}`;
     }

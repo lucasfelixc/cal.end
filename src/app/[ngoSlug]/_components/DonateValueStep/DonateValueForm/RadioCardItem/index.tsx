@@ -1,5 +1,6 @@
 import {FormControl, FormLabel} from '@/components/ui/Form';
 import {RadioGroupItem} from '@/components/ui/RadioGroup';
+import {moneyFormatter} from '@/utils/convertValues';
 import {FunctionComponent} from 'react';
 
 export type RadioCardItemProps = {
@@ -7,7 +8,7 @@ export type RadioCardItemProps = {
     isSubscription: boolean,
     field: {
         id: string,
-        value: string,
+        value: number,
     },
 };
 
@@ -19,7 +20,7 @@ export const RadioCardItem: FunctionComponent<RadioCardItemProps> = props => {
             htmlFor={field.id}
             data-selected={isSelected}
             className={
-                'flex items-center justify-center flex-col w-24 h-24 p-3'
+                'flex items-center justify-center flex-col w-full h-24 p-3'
                 + 'text-medium-gray text-sm bg-white border'
                 + ' border-gray-400 rounded-lg cursor-pointer'
                 + ' data-[selected=true]:border-indigo-600'
@@ -30,7 +31,7 @@ export const RadioCardItem: FunctionComponent<RadioCardItemProps> = props => {
             <FormControl>
                 <RadioGroupItem
                     id={field.id}
-                    value={field.value}
+                    value={field.value.toString()}
                     className="sr-only peer"
                     aria-label={
                         `${isSubscription
@@ -47,9 +48,11 @@ export const RadioCardItem: FunctionComponent<RadioCardItemProps> = props => {
                     + ' data-[selected=true]:text-indigo-600'
                 }
             >
-                {isSubscription ? 'Assine' : 'Doe'}
-                <span className="block font-bold">{field.value} Reais</span>
-                {isSubscription && 'por mês'}
+                <span className="text-xs">{isSubscription ? 'Assine' : 'Doe'}</span>
+                <span className="block">
+                    <span className="block font-bold">{moneyFormatter(field.value)}</span>
+                    <span className="text-xs">{isSubscription && '/mês'}</span>
+                </span>
             </p>
         </FormLabel>
     );
