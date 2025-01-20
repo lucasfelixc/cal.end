@@ -1,12 +1,15 @@
+/* eslint-disable jsx-a11y/label-has-associated-control -- This is not necessary */
+
 'use client';
 
 import {Dispatch, FunctionComponent, SetStateAction, useState} from 'react';
 import dayjs from 'dayjs';
 import {useDonatorInfo} from '@/hooks/useDonatorInfo';
-import {moneyFormatter} from '@/utils/convertValues';
+import {getValueWithTax, moneyFormatter} from '@/utils/convertValues';
 import {Skeleton} from '@/components/ui/Skeleton';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/components/ui/Button';
+import {Switch} from '@/components/ui/Switch';
 import {DetailCard} from './DetailCard';
 
 type DonatorInfoResumeInfoProps = {
@@ -19,6 +22,7 @@ export const DonatorInfoResumeInfo: FunctionComponent<DonatorInfoResumeInfoProps
     const router = useRouter();
     const {donatorInfo} = useDonatorInfo();
     const [loading, setLoading] = useState(false);
+    const [includeTaxes, setIncludeTaxes] = useState<boolean>(true);
     const isSubscription = donatorInfo?.payment?.recurring_payment_enabled ?? false;
 
     async function onSubmit(): Promise<void> {
@@ -30,7 +34,9 @@ export const DonatorInfoResumeInfo: FunctionComponent<DonatorInfoResumeInfoProps
                     ...donatorInfo,
                     payment: {
                         ...donatorInfo?.payment,
-                        amount: (donatorInfo?.payment?.amount ?? 0) * 100,
+                        amount: includeTaxes
+                            ? getValueWithTax((donatorInfo?.payment?.amount ?? 0) * 100, 4)
+                            : (donatorInfo?.payment?.amount ?? 0) * 100,
                     },
                     ...(donatorInfo?.paymentWay === 'card' && {
                         paymentMethodInfo: donatorInfo?.paymentMethodInfo,
@@ -60,12 +66,29 @@ export const DonatorInfoResumeInfo: FunctionComponent<DonatorInfoResumeInfoProps
                 content={
                     donatorInfo?.payment?.amount !== undefined
                         ? (
-                            <p className="flex gap-1 items-baseline mt-2">
-                                <span className="text-gray-800 text-lg font-bold">
-                                    {moneyFormatter(donatorInfo?.payment?.amount)}
-                                </span>
-                                {isSubscription && <span className="text-xs text-gray-500">/mês</span>}
-                            </p>
+                            <div className="flex flex-col gap-4 mt-2">
+                                <div className="flex items-end gap-1">
+                                    <span className="text-gray-800 text-lg leading-5 font-bold">
+                                        {moneyFormatter(
+                                            includeTaxes
+                                                ? getValueWithTax(donatorInfo?.payment?.amount, 4)
+                                                : donatorInfo?.payment?.amount,
+                                        )}
+                                    </span>
+                                    {isSubscription && <span className="text-xs text-gray-500">/mês</span>}
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Switch
+                                        id="include_taxes"
+                                        checked={includeTaxes}
+                                        aria-label="Cobrir taxas administrativas da doação."
+                                        onCheckedChange={setIncludeTaxes}
+                                    />
+                                    <label htmlFor="include_taxes" className="text-sm text-gray-700 !m-0">
+                                        Cobrir taxas administrativas da doação.
+                                    </label>
+                                </div>
+                            </div>
                         )
                         : (
                             <Skeleton className="w-full h-10 bg-neutral-200 my-2" />

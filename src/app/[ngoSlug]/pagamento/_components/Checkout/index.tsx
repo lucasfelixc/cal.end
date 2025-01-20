@@ -1,7 +1,6 @@
 'use client';
 
 import {Fragment, FunctionComponent} from 'react';
-import {PaymentCardDetail} from '@/app/[ngoSlug]/_components/PaymentCardDetail';
 import {ProtectStep} from '@/app/[ngoSlug]/_components/ProtectStep';
 import {CreditCardForm} from './CreditCardForm';
 
@@ -13,7 +12,6 @@ export const Checkout: FunctionComponent<CheckoutProps> = ({slug}) => (
         requiredInfo="paymentWay"
         render={(
             <Fragment>
-                <PaymentCardDetail hasEditButton slug={slug} />
                 <h2 className="my-5 text-center font-semibold text-lg text-gray-800 leading-7">
                     Dados de pagamento
                 </h2>

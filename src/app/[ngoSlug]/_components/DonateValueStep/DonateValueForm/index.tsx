@@ -12,10 +12,8 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/
 import {RadioGroup} from '@/components/ui/RadioGroup';
 import {CurrencyInput} from '@/components/ui/CurrencyInput';
 import {Button} from '@/components/ui/Button';
-import {Switch} from '@/components/ui/Switch';
 import {Tabs, TabsList, TabsTrigger} from '@/components/ui/Tabs';
 import {NgoData} from '@/app/[ngoSlug]/_ngoData';
-import {getValueWithTax} from '@/utils/convertValues';
 import {RadioCardItem} from './RadioCardItem';
 
 const formSchema = z.object({
@@ -46,18 +44,16 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [isSubscription, setIsSubscription] = useState(true);
-    const [includeTaxes, setIncludeTaxes] = useState<boolean>(true);
     const {donatorInfo, setDonatorInfo} = useDonatorInfo();
-    const {amount, recurring_payment_enabled, include_taxes} = donatorInfo?.payment ?? {};
+    const {amount, recurring_payment_enabled} = donatorInfo?.payment ?? {};
     const form = useForm<TFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             donateValue: amount?.toString(),
             subscription:
         (recurring_payment_enabled ?? null) !== null
-            ? (recurring_payment_enabled ?? false) === false
+            ? (recurring_payment_enabled ?? false)
             : true,
-            include_taxes: include_taxes ?? true,
         },
     });
 
@@ -70,7 +66,7 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
                 payment: {
                     ...prev?.payment,
                     amount: parseFloat(values.donateValue.replaceAll(',', '.')),
-                    recurring_payment_enabled: (values.subscription ?? false) === false,
+                    recurring_payment_enabled: (values.subscription ?? false),
                     ngo_slug: slug,
                 },
             }),
@@ -139,15 +135,11 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
                                                     isSubscription={isSubscription}
                                                     isSelected={
                                                         field.value
-                                                        === (includeTaxes === true
-                                                            ? getValueWithTax(product.price / 100, 4)
-                                                            : product.price / 100).toString()
+                                                        === (product.price / 100).toString()
                                                     }
                                                     field={{
                                                         id: (product.price).toString(),
-                                                        value: includeTaxes === true
-                                                            ? getValueWithTax(product.price / 100, 4)
-                                                            : product.price / 100,
+                                                        value: product.price / 100,
                                                     }}
                                                 />
                                             </FormItem>
@@ -174,31 +166,6 @@ export const DonateValueForm: FunctionComponent<DonateValueFormProps> = (props: 
                                     />
                                     <FormMessage />
                                 </FormItem>
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="include_taxes"
-                        render={({field}) => (
-                            <FormItem className="flex items-center gap-4 my-5">
-                                <FormControl>
-                                    <Switch
-                                        id="include_taxes"
-                                        checked={field.value === true}
-                                        aria-label="Cobrir taxas administrativas da doação."
-                                        onCheckedChange={
-                                            checked => {
-                                                field.onChange(checked);
-                                                form.resetField('donateValue');
-                                                setIncludeTaxes(checked);
-                                            }
-                                        }
-                                    />
-                                </FormControl>
-                                <FormLabel htmlFor="include_taxes" className="text-sm text-gray-700 !m-0">
-                                    Cobrir taxas administrativas da doação.
-                                </FormLabel>
                             </FormItem>
                         )}
                     />

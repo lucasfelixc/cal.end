@@ -38,7 +38,6 @@ export type DonatorInfo = {
         ngo_slug: string,
         payment_method_id: string,
         document: number,
-        include_taxes: boolean,
     },
     paymentMethodInfo: {
         creditCard: {
