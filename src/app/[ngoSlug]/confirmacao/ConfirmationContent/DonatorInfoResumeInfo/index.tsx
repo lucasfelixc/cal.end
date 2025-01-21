@@ -20,7 +20,7 @@ type DonatorInfoResumeInfoProps = {
 export const DonatorInfoResumeInfo: FunctionComponent<DonatorInfoResumeInfoProps> = props => {
     const {slug, setHasError} = props;
     const router = useRouter();
-    const {donatorInfo} = useDonatorInfo();
+    const {donatorInfo, setDonatorInfo} = useDonatorInfo();
     const [loading, setLoading] = useState(false);
     const [includeTaxes, setIncludeTaxes] = useState<boolean>(true);
     const isSubscription = donatorInfo?.payment?.recurring_payment_enabled ?? false;
@@ -28,6 +28,16 @@ export const DonatorInfoResumeInfo: FunctionComponent<DonatorInfoResumeInfoProps
     async function onSubmit(): Promise<void> {
         try {
             setLoading(true);
+            setDonatorInfo(
+                prev => ({
+                    ...prev,
+                    payment: {
+                        ...prev?.payment,
+                        include_taxes: includeTaxes,
+                    },
+                }),
+            );
+
             const response = await fetch('/api/payment-checkout', {
                 method: 'POST',
                 body: JSON.stringify({

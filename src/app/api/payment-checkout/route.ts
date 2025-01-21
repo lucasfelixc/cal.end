@@ -39,12 +39,14 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const {cpf: userCpf, ...userData} = user;
+    const {include_taxes, ...paymentData} = payment;
 
     const payload = {
         user: userData,
         address: address,
         payment: {
-            ...payment,
+            ...paymentData,
+            amount: Math.round(paymentData.amount ?? 0),
             payment_type: paymentWay,
             ...(paymentWay === 'card' && paymentMethod !== undefined && {
                 payment_method_id: paymentMethod.id,

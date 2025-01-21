@@ -3,7 +3,7 @@
 import {FunctionComponent} from 'react';
 import {useRouter} from 'next/navigation';
 import {useDonatorInfo} from '@/hooks/useDonatorInfo';
-import {moneyFormatter} from '@/utils/convertValues';
+import {getValueWithTax, moneyFormatter} from '@/utils/convertValues';
 import {Skeleton} from '@/components/ui/Skeleton';
 import {Button} from '@/components/ui/Button';
 import {Pencil} from 'lucide-react';
@@ -29,7 +29,11 @@ export const PaymentCardDetail: FunctionComponent<PaymentCardDetailProps> = prop
                     ? (
                         <p className="flex gap-1 items-baseline mt-2">
                             <span className="text-gray-800 text-2xl font-bold">
-                                {moneyFormatter(donatorInfo?.payment?.amount)}
+                                {moneyFormatter(
+                                    donatorInfo.payment.include_taxes === true
+                                        ? getValueWithTax(donatorInfo?.payment?.amount, 4)
+                                        : donatorInfo?.payment?.amount,
+                                )}
                             </span>
                             {isSubscription && <span className="text-xs text-gray-500">/mês</span>}
                         </p>
