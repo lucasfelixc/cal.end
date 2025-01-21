@@ -58,30 +58,6 @@ export const CreditCardForm: FunctionComponent<CreditCardFormProps> = ({slug}) =
         );
 
         router.push(`/${slug}/confirmacao`);
-
-        // try {
-        //     const response = await fetch('/api/payment-checkout', {
-        //         method: 'POST',
-        //         body: JSON.stringify({
-        //             ...donatorInfo,
-        //             payment: {
-        //                 ...donatorInfo?.payment,
-        //                 amount: (donatorInfo?.payment?.amount ?? 0) * 100,
-        //             },
-        //             paymentMethodInfo: paymentMethodInfo,
-        //         }),
-        //     });
-
-        //     if (!response.ok) {
-        //         throw new Error(response.statusText);
-        //     }
-
-        //     setHasError(false);
-
-        //     router.push(`/${slug}/sucesso`);
-        // } catch (e) {
-        //     setHasError(true);
-        // }
     }
 
     useEffect(() => () => setLoading(false), []);
