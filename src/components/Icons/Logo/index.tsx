@@ -1,10 +1,17 @@
-import {FunctionComponent} from 'react';
-import {HeartBrand} from './HeartBrand';
-import {TitleBrand} from './TitleBrand';
+import Image from "next/image";
+import { FunctionComponent } from "react";
 
 export const Logo: FunctionComponent = () => (
-    <div role="img" aria-label="Logo da helpflix" className="flex items-center gap-2">
-        <HeartBrand />
-        <TitleBrand />
+    <div
+        role="img"
+        aria-label="Logo do calend"
+        className="flex items-center gap-2"
+    >
+        <Image
+            src="/img/logo.svg"
+            alt="Logo do calend"
+            width={55}
+            height={21}
+        />
     </div>
 );
